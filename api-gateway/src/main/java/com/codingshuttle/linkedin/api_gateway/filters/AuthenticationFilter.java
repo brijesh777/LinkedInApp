@@ -1,6 +1,7 @@
 package com.codingshuttle.linkedin.api_gateway.filters;
 
 import com.codingshuttle.linkedin.api_gateway.service.JwtService;
+import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -30,16 +31,21 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 log.error("Invalid token header");
                 return exchange.getResponse().setComplete();
             }
+            try {
+                final String token = tokenHeader.split("Bearer ")[1];
+                String userId = jwtService.getUserIdFromToken(token);
 
-            final String token = tokenHeader.split("Bearer ")[1];
-            String userId = jwtService.getUserIdFromToken(token);
+                ServerWebExchange modifiedExchange = exchange
+                        .mutate()
+                        .request(r -> r.header("X-User-Id", userId))
+                        .build();
 
-            ServerWebExchange modifiedExchange = exchange
-                    .mutate()
-                    .request(r -> r.header("X-User-Id", userId))
-                    .build();
-
-            return chain.filter(modifiedExchange);
+                return chain.filter(modifiedExchange);
+            } catch (JwtException e) {
+                log.error("Jwt Exception: {}", e.getMessage());
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
         };
     }
 

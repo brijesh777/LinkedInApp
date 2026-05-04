@@ -19,14 +19,29 @@ import java.util.stream.Collectors;
 public class PostsService {
 
     private final PostsRepository postsRepository;
-    private final ModelMapper  modelMapper;
+    private final ModelMapper modelMapper;
 
-    public PostDto createdPost(PostDto postDto, Long userId) {
+    public PostDto createdPost(PostCreateRequestDto postDto, Long userId) {
         Post post = modelMapper.map(postDto, Post.class);
         post.setUserId(userId);
 
         Post savedPost = postsRepository.save(post);
         return modelMapper.map(savedPost, PostDto.class);
+    }
 
+    public PostDto getPostById(Long postId) {
+        log.debug("Retrieving post with ID: {}", postId);
+        Post post = postsRepository.findById(postId).orElseThrow(() ->
+                new ResourceNotFoundException("Post not found with id: " + postId));
+        return modelMapper.map(post, PostDto.class);
+    }
+
+    public List<PostDto> getAllPostsOfUser(Long userId) {
+        List<Post> posts = postsRepository.findByUserId(userId);
+
+        return posts
+                .stream()
+                .map((element) -> modelMapper.map(element, PostDto.class))
+                .collect(Collectors.toList());
     }
 }

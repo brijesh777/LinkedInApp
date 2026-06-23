@@ -42,9 +42,6 @@ public class PostLikeService {
                 () -> new ResourceNotFoundException("Post not found with id:" + postId));
 
 
-        boolean exists = postLikeRepository.existsById(postId);
-        if (!exists) throw new ResourceNotFoundException("Post not found with id: " + postId);
-
         boolean alreadyLiked = postLikeRepository.existsById(postId);
         if (!alreadyLiked) throw new BadRequestException("Post already liked with id: " + postId);
 

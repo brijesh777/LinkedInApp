@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: connections-db
+spec:
+  selector:
+    matchLabels:
+      app: connections-db
+  serviceName: connections-db
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: connections-db
+    spec:
+      containers:
+      - name: connections-db
+        image: neo4j
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+        env:
+          - name: NEO4J_AUTH
+            value: neo4j/password
+          - name: NEO4J_server_memory_heap_initial__size
+            value: "256m"
+          - name: NEO4J_server_memory_heap_max__size
+            value: "512m"
+          - name: NEO4J_server_memory_pagecache_size
+            value: "128m"
+        ports:
+        - containerPort: 7687
+          name: bolt
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: "standard-rwo"
+      volumeMode: Filesystem
+      resources:
+        requests:
+          storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: connections-db
+spec:
+  clusterIP: None
+  selector:
+    app: connections-db
+  ports:
+  - port: 7687
+    targetPort: 7687

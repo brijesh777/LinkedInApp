@@ -12,30 +12,30 @@ spec:
         app: posts-service
     spec:
       containers:
-      - name: posts-service
-        image: briju777/linkedin-app-posts-service
-        resources:
-          limits:
-            memory: "400Mi"
-            cpu: "200m"
-          requests:
-            memory: "200Mi"
-            cpu: "100m"
-        env:
-          - name: SPRING_PROFILE_ACTIVE
-            value: k8s
-          - name: DB_USER
-            value: postgres
-             
-          - name: DB_PASSWORD
-            value: postgres
-          - name: DB_SERVICE
-            value: posts-db
-          - name: DB_NAME
-            value: postsDB
+        - name: posts-service
+          image: briju777/linkedin-app-posts-service
+          resources:
+            limits:
+              memory: "400Mi"
+              cpu: "200m"
+            requests:
+              memory: "200Mi"
+              cpu: "100m"
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: k8s
+            - name: DB_USER
+              value: postgres
 
-        ports:
-        - containerPort: 9010
+            - name: DB_PASSWORD
+              value: postgres
+            - name: DB_SERVICE
+              value: posts-db
+            - name: DB_NAME
+              value: postsDB
+
+          ports:
+            - containerPort: 9010
 
 ---
 
@@ -47,5 +47,5 @@ spec:
   selector:
     app: posts-service
   ports:
-  - port: 80
-    targetPort: 9010
+    - port: 80
+      targetPort: 9010

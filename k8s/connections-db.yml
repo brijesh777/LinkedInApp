@@ -2,12 +2,14 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: neo4j
+  labels:
+    app: neo4j
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: neo4j
   serviceName: "neo4j"
-  replicas: 1
   template:
     metadata:
       labels:
@@ -18,25 +20,24 @@ spec:
           image: neo4j:4.4.39-community
           resources:
             limits:
-              memory: 4Gi
               cpu: "200m"
+              memory: 4Gi
             requests:
-              memory: "600Mi"
-              cpu: "100m"
+              cpu: 100m
+              memory: 600Mi
+          ports:
+            - containerPort: 7687 # Bolt
           env:
             - name: NEO4J_AUTH
-              value: neo4j/password
+              value: "neo4j/password" # Change as per your setup
             - name: NEO4J_dbms_memory_heap_initial__size
               value: "512M"
             - name: NEO4J_dbms_memory_heap_max__size
-              value: "256M"
-            - name: NEO4J_dbms_default_listen_address
+              value: "2G"
+            - name: NEO4J_dbms_default__listen__address
               value: "0.0.0.0"
             - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
               value: "yes"
-          ports:
-            - containerPort: 7687
-              name: bolt
           volumeMounts:
             - name: neo4j-data
               mountPath: /data
@@ -57,15 +58,19 @@ spec:
         resources:
           requests:
             storage: 1Gi
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: neo4j
+  labels:
+    app: neo4j
 spec:
   clusterIP: None
-  selector:
-    app: neo4j
   ports:
     - port: 7687
       targetPort: 7687
+      name: bolt
+  selector:
+    app: neo4j

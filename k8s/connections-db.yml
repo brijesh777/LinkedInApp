@@ -1,62 +1,71 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: connections-db
+  name: neo4j
 spec:
   selector:
     matchLabels:
-      app: connections-db
-  serviceName: connections-db
+      app: neo4j
+  serviceName: "neo4j"
   replicas: 1
   template:
     metadata:
       labels:
-        app: connections-db
+        app: neo4j
     spec:
       containers:
-      - name: connections-db
-        image: neo4j
-        resources:
-          limits:
-            memory: "1Gi"
-            cpu: "500m"
-          requests:
-            memory: "512Mi"
-            cpu: "250m"
-        env:
-          - name: NEO4J_AUTH
-            value: neo4j/password
-          - name: NEO4J_server_memory_heap_initial__size
-            value: "256m"
-          - name: NEO4J_server_memory_heap_max__size
-            value: "512m"
-          - name: NEO4J_server_memory_pagecache_size
-            value: "128m"
-        ports:
-        - containerPort: 7687
-          name: bolt
-        volumeMounts:
-        - name: data
-          mountPath: /data
+        - name: neo4j
+          image: neo4j:4.4.39-community
+          resources:
+            limits:
+              memory: 4Gi
+              cpu: "200m"
+            requests:
+              memory: "600Mi"
+              cpu: "100m"
+          env:
+            - name: NEO4J_AUTH
+              value: neo4j/password
+            - name: NEO4J_dbms_memory_heap_initial__size
+              value: "512M"
+            - name: NEO4J_dbms_memory_heap_max__size
+              value: "256M"
+            - name: NEO4J_dbms_default_listen_address
+              value: "0.0.0.0"
+            - name: NEO4J_ACCEPT_LICENSE_AGREEMENT
+              value: "yes"
+          ports:
+            - containerPort: 7687
+              name: bolt
+          volumeMounts:
+            - name: neo4j-data
+              mountPath: /data
+            - name: neo4j-logs
+              mountPath: /logs
   volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: "standard-rwo"
-      volumeMode: Filesystem
-      resources:
-        requests:
-          storage: 1Gi
+    - metadata:
+        name: neo4j-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 2Gi
+    - metadata:
+        name: neo4j-logs
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: connections-db
+  name: neo4j
 spec:
   clusterIP: None
   selector:
-    app: connections-db
+    app: neo4j
   ports:
-  - port: 7687
-    targetPort: 7687
+    - port: 7687
+      targetPort: 7687

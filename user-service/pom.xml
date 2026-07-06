@@ -124,7 +124,7 @@
 
                 <configuration>
                     <to>
-                        <image>docker.io/briju777/linkedin-${project.name}:${project.version}</image>
+                        <image>docker.io/briju777/linkedin-app-${project.name}:${project.version}</image>
                         <tags>
                             <tag>latest</tag>
                         </tags>

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: briju777/linkedin-app-api-gateway
+        resources:
+          limits:
+            memory: "500Mi"
+            cpu: "200m"
+          requests:
+            memory: "100Mi"
+            cpu: "25m"
+
+        ports:
+        - containerPort: 8080
+        env:
+          - name: SPRING_PROFILES_ACTIVE
+            value: k8s
+          - name: EUREKA_CLIENT_ENABLED
+            value: "false"
+          - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+            value: health,info
+          - name: SPRING_APPLICATION_JSON
+            value: '{"spring":{"cloud":{"gateway":{"routes":[{"id":"user-service","uri":"http://user-service","predicates":["Path=/api/v1/users/**"],"filters":["StripPrefix=2"]},{"id":"posts-service","uri":"http://posts-service","predicates":["Path=/api/v1/posts/**"],"filters":["StripPrefix=2",{"name":"AuthenticationFilter"}]},{"id":"connections-service","uri":"http://connections-service","predicates":["Path=/api/v1/connections/**"],"filters":["StripPrefix=2",{"name":"AuthenticationFilter"}]}]}}}}'
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          timeoutSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  annotations:
+    cloud.google.com/backend-config: '{"default":"api-gateway-backendconfig"}'
+spec:
+  type: ClusterIP
+  selector:
+    app: api-gateway
+  ports:
+  - port: 80
+    targetPort: 8080
+
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: api-gateway-backendconfig
+spec:
+  healthCheck:
+    type: HTTP
+    requestPath: /actuator/health
+    port: 8080
+
